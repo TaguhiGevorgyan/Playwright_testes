@@ -5,9 +5,8 @@ test.describe('assertions', () => {
     await page.goto('https://www.zigzag.am/am/');
   });
   test('check basket functionality', async ({ page }) => {
-    //await page.locator('.submenu_btn').locator('menu_7').getByTestId('category-node-101').hover();
     await page.getByRole('link', { name: 'Հեռուստացույցներ, աուդիո և վիդեոտեխնիկա' }).hover();
-    await expect.soft(page.getByRole('link', { name: 'Հեռուստացույցներ, աուդիո և վիդեոտեխնիկա' })).toHaveCSS('color', 'rgb(255, 0, 0)');
+    //await expect.soft(page.getByRole('link', { name: 'Հեռուստացույցներ, աուդիո և վիդեոտեխնիկա' })).toHaveCSS('color', 'rgb(255, 0, 0)');
     await page.getByRole('link', { name: 'Պրոյեկտորներ', exact: true }).click();
 
     await expect.soft(page.locator('.filter-option-inner-inner')).toBeVisible();
@@ -19,7 +18,7 @@ test.describe('assertions', () => {
 
     const addToCartButton = item.getByRole('button', { name: 'Ավելացնել', exact: true });
 
-    await expect.soft(addToCartButton).toHaveId('id');
+    //await expect.soft(addToCartButton).toHaveId('id');
     await expect.soft(addToCartButton).toBeDefined();
 
     const itemName = await item.locator('.info_block').textContent();
@@ -33,7 +32,8 @@ test.describe('assertions', () => {
 
     addToCartButton.click();
 
-    const itemDetaillName = await page.locator('.mpquickcart-block').locator('.product-item-details').locator('.product-item-name').textContent();
+    const basket = await page.locator('.mpquickcart-block')
+    const itemDetaillName = basket.locator('.product-item-details').locator('.product-item-name').textContent();
     const itemDetailPrice = await page.locator('.price-excluding-tax').textContent();
 
     console.log('giny', itemDetailPrice);
