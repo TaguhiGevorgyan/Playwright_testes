@@ -48,7 +48,7 @@ test.describe('Add and delete items from basket', () => {
 
         //9․ Ընտրել որևէ ապրանք
 
-        const item2 = page.locator('.product-item-details').filter({ hasText: 'Bosch HXC39AG51Q' });
+        const item2 = page.locator('.product-item-details').filter({ hasText: 'Teka HSB 630 BLACK' });
 
         //10.Վերագրել փոփոխականի ապրանքի գումարը
 
@@ -69,7 +69,7 @@ test.describe('Add and delete items from basket', () => {
 
         //12.Ստուգել զամբյուզում երկու ապրանքների անունները և գումարները և ընդհանուր գումարը (Soft Assertion)
 
-        expect.soft(item2Name).toContain('Bosch HXC39AG51Q');
+        expect.soft(item2Name).toContain('Teka HSB 630 BLACK');
         expect.soft(itemName).toContain('Epson CO-FD01 Full HD Projector /V11HA84240');
         expect.soft(item2BasketPrice?.trim()).toContain(' 349,000 ֏');
         expect.soft(itemBasketPrice?.trim()).toContain('279,900 ֏');
@@ -96,7 +96,7 @@ test.describe('Add and delete items from basket', () => {
         const itemNameLast = await orderCard.locator('.product-item-name-block').first().textContent();
         const item2NameLast = await orderCard.locator('.product-item-name-block').nth(1).textContent();
         expect.soft(itemNameLast).toContain('Epson CO-FD01 Full HD Projector /V11HA84240');
-        expect.soft(item2NameLast).toContain('Bosch HXC39AG51Q');
+        expect.soft(item2NameLast).toContain('Teka HSB 630 BLACK');
         const itemsTotalPriceCheck = await page.locator('.grand.totals .price').textContent();
         const numItemsTotalPriceCheck = parsePrice(itemsTotalPriceCheck);
         expect(numItemsTotalPriceCheck).toEqual(numItemsTotalPrice);
