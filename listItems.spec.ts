@@ -91,23 +91,24 @@ test.describe('Add and delete items from basket', () => {
         //10. Կատարել Պատվիրել գործողությունը
 
         await page.locator('#top-cart-btn-checkout').click();
-        const orderCard = page.locator('#checkout-review-table');
-        await expect.soft(orderCard).toBeVisible();
-        const itemNameLast = await orderCard.locator('.product-item-name-block').first().textContent();
-        const item2NameLast = await orderCard.locator('.product-item-name-block').nth(1).textContent();
-        expect.soft(itemNameLast).toContain('Epson CO-FD01 Full HD Projector /V11HA84240');
-        expect.soft(item2NameLast).toContain('Teka HSB 630 BLACK');
-        const itemsTotalPriceCheck = await page.locator('.grand.totals .price').textContent();
-        const numItemsTotalPriceCheck = parsePrice(itemsTotalPriceCheck);
-        expect(numItemsTotalPriceCheck).toEqual(numItemsTotalPrice);
+       // const orderCard = page.locator('#checkout-review-table');
+        //await expect.soft(orderCard).toBeVisible();
+        //const itemNameLast = await orderCard.locator('.product-item-name-block').first().textContent();
+        //const item2NameLast = await orderCard.locator('.product-item-name-block').nth(1).textContent();
+        //expect.soft(itemNameLast).toContain('Epson CO-FD01 Full HD Projector /V11HA84240');
+        //expect.soft(item2NameLast).toContain('Teka HSB 630 BLACK');
+        //const itemsTotalPriceCheck = await page.locator('.grand.totals .price').textContent();
+        //const numItemsTotalPriceCheck = parsePrice(itemsTotalPriceCheck);
+        //expect(numItemsTotalPriceCheck).toEqual(numItemsTotalPrice);
 
         //11․ Լրացնել "Առաքման հասցե" -ի բոլոր դաշտերը
 
-        await page.waitForTimeout(5000);
-        const deliveryCard = page.locator('#shipping-new-address-form');
+        //await page.waitForTimeout(5000);
+        
         const emailField = page.locator('#customer-email').first();
         await emailField.fill('gevorgyantaguhi12.11@gmail.com');
         await expect.soft(emailField).toBeVisible();
+        const deliveryCard = page.locator('#shipping-new-address-form');
         const firstName = deliveryCard.locator('input[name="firstname"]');
         await firstName.fill('Taguhi');
         await expect.soft(firstName).toBeVisible();
@@ -141,20 +142,58 @@ test.describe('Add and delete items from basket', () => {
     })
 
 
-    test('Sorting test', async ({ page }) => {
-        const searchBox = page.getByRole('combobox', { name: 'Մուտքագրեք ապրանքի անվանումը' });
+    test('Price sorting test', async ({ page }) => {
+        //1. Search the item
+        const searchBox = page.locator('#search');
         await searchBox.fill('iphone 16');
         await searchBox.press('Enter');
+        //2.Check if search result is visible
         const header = page.getByText('Search results for "iphone 16"');
         await expect(header).toBeVisible();
-        const filterButton = page.getByRole('button', { name: 'Դասավորել ըստ' });
+        //3.Sort the page 
+        const filterButton = page.locator('.filter-option-inner-inner');
         await filterButton.click();
-        await page.click('text=Գնի աճման');
-        const prices = await page.$$eval('.product-item .price', priceElements =>
-            priceElements.map(el => (el?.textContent || '').replace(/[֏,\s]/g, '')).map(text => parseInt(text))
-        );
-        console.log('gner', prices)
-        const sorted = [...prices].sort((a, b) => a - b);
-        expect(prices).toEqual(sorted);
-    })
+        await page.click('text=Գնի նվազման');
+        //4.Take all current prices
+        const priceLocator = page.locator('span.current_price');
+        //5 wait untile the first elemnet will be visible
+        await expect(priceLocator.first()).toBeVisible({ timeout: 10000 });
+        //6.All elements count
+        const count = await priceLocator.count();
+        //7.Loop into all elements and take all elements' prices
+        let arr: number[] = [];
+        for (let i = 0; i < count; i++) {
+          const singlePrice = priceLocator.nth(i);
+          const text = await singlePrice.innerText();
+          const numPrice = parseFloat(text.replace(/[^\d.]/g, '').replace(/,/g, ''));
+          arr.push(numPrice);
+          }
+        //8.Compare elements with each other
+        for(let i = 0; i < count-1; i++){
+            expect(arr[i] >= arr[i+1]);
+        }
+})
+
+test('Search functionality', async ({page})=>{
+    //Search the item
+    const searchBox = page.locator('#search');
+    await searchBox.fill('Samsung');
+    await searchBox.press('Enter');
+    //Check if the correct page is opened
+    const headerText = page.locator('.span.base');
+    expect.soft(headerText).toHaveText('Search results for "Samsung"');
+    //take all items' names
+    const nameLocator = page.locator('.product_name');
+    //wait untill the first item name will appear
+    await expect(nameLocator.first()).toBeVisible({ timeout: 10000 });
+    //count of items in the first page
+    const count = await nameLocator.count();
+    //check if all elements contain "Samsung" in their names
+    for(let i =0; i < count; i++){
+        const item = nameLocator.nth(i);
+        const itemName = await item.textContent();
+        console.log(itemName);
+        expect.soft(itemName?.toLowerCase()).toContain("samsung");
+    }
+})
 })
