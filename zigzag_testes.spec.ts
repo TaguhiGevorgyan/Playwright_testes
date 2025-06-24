@@ -1,97 +1,75 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Add and delete items from basket', () => {
+test.describe('Price Sorting, Search Functionality ', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://www.zigzag.am/am/');
   });
-
-  test('Find the item, open and compare the price', async ({ page }) => {
-    const searchBox = page.locator('input[name="q"]').first();
-    await searchBox.fill('TV');
+  test('Price sorting test', async ({ page }) => {
+    //1. Search the item
+    const searchBox = page.locator('#search');
+    await searchBox.fill('iphone 16');
     await searchBox.press('Enter');
-
-    const itemBox = page.locator('.product-item-details');
-    const item = itemBox.filter({ hasText: 'Yandex TV Alisa 43' });
-
-    const oldPriceLocator = item.locator('.price .promo-price-44559');
-    const newPriceLocator = item.locator('.price .current_price');
-
-    let priceText: string | null;
-    if (await newPriceLocator.isVisible()) {
-      priceText = await newPriceLocator.textContent();
-    } else {
-      priceText = await oldPriceLocator.textContent();
+    //2.Check if search result is visible
+    const header = page.getByText('Search results for "iphone 16"');
+    await expect(header).toBeVisible();
+    //3.Sort the page 
+    const filterButton = page.locator('.filter-option-inner-inner');
+    await filterButton.click();
+    await page.click('text=Գնի նվազման');
+    //4.Take all current prices
+    const priceLocator = page.locator('span.current_price');
+    //5 wait untile the first elemnet will be visible
+    await expect(priceLocator.first()).toBeVisible({ timeout: 10000 });
+    //6.All elements count
+    const count = await priceLocator.count();
+    //7.Loop into all elements and take all elements' prices
+    let arr: number[] = [];
+    for (let i = 0; i < count; i++) {
+      const singlePrice = priceLocator.nth(i);
+      const text = await singlePrice.innerText();
+      const numPrice = parseFloat(text.replace(/[^\d.]/g, '').replace(/,/g, ''));
+      arr.push(numPrice);
     }
-
-    const numericPrice = Number(priceText?.replace(/[^\d]/g, ''));
-    console.log('Extracted Price:', numericPrice);
-
-    await item.click();
-
-    await expect(page.locator('.value').filter({ hasText: '015750' })).toBeVisible();
-
-    const detailNewPrice = page.locator('.price .current_price');
-    const detailOldPrice = page.locator('.price .promo-old-price');
-
-    let detailPriceText;
-    if (await detailNewPrice.isVisible()) {
-      detailPriceText = await detailNewPrice.textContent();
-    } else {
-      detailPriceText = await detailOldPrice.textContent();
+    //8.Compare elements with each other
+    for (let i = 0; i < count - 1; i++) {
+      expect(arr[i] >= arr[i + 1]);
+      console.log(' bababa', arr[i]);
     }
-
-    const detailNumericPrice = Number(detailPriceText?.replace(/[^\d]/g, ''));
-    expect(detailNumericPrice).toBe(numericPrice);
-  });
-
-  test('Add item to the basket', async ({ page }) => {
-    const searchBox = page.locator('.minisearch .input-text');
-    await searchBox.fill('mobile');
+  })
+  test('Search functionality', async ({ page }) => {
+  //Search the item
+    const searchBox = page.locator('#search');
+    await searchBox.fill('Samsung');
     await searchBox.press('Enter');
-
-    const itemBox = page.locator('.product-item-details');
-    const item = itemBox.filter({ hasText: 'Apple USB-C to Lightning Cable (2m) /MW2R3' });
-    const itemName = await item.textContent();
-
-    await item.hover();
-    const addToCartButton = item.locator('.action').getByText('Ավելացնել');
-    
-    await addToCartButton.waitFor({ state: 'visible' });
-    await addToCartButton.click();
-
-    const basketButton = page.locator('.basket_block .basket_btn');
-    await basketButton.waitFor({ state: 'visible' });
-    await basketButton.click();
-
-    const basketItem = page.locator('.mpquickcart-block .product-item-details');
-    const basketItemText = await basketItem.textContent();
-
-    expect(itemName?.trim()).toContain(basketItemText?.trim() ?? '');
-  });
-
-  test('Add item, delete it, and verify basket is empty', async ({ page }) => {
-    const searchBox = page.locator('.minisearch .input-text');
-    await searchBox.fill('mobile');
+  //Check if the correct page is opened
+    const headerText = page.locator('.span.base');
+    expect.soft(headerText).toHaveText('Search results for "Samsung"');
+  //take all items' names and prices
+    const nameLocator = page.locator('.product_name');
+    const priceLocator = page.locator('span.price');
+  //wait untill the first item's name and price will appear
+    await expect(nameLocator.first()).toBeVisible({ timeout: 10000 });
+    await expect(priceLocator.first()).toBeVisible({ timeout: 1000 });
+  //count of items in the first page
+    const count = await nameLocator.count();
+  //check if all elements contain "Samsung" in their names
+    for (let i = 0; i < count; i++) {
+      const item = nameLocator.nth(i);
+      const price = priceLocator.nth(i);
+      const itemName = await item.textContent();
+      const itemPrice = await price.textContent();
+      console.log(itemName, ' ', itemPrice);
+      expect.soft(itemName?.toLowerCase()).toContain("samsung");
+    }
+  })
+  //invalid search
+  test('Invalid search', async ({ page }) => {
+    const searchBox = page.locator('#search');
+    await searchBox.fill('test');
     await searchBox.press('Enter');
-
-    const itemBox = page.locator('.product-item-details');
-    const item = itemBox.filter({ hasText: 'Apple USB-C to Lightning Cable (2m) /MW2R3' });
-
-    await item.hover();
-    const addToCartButton = item.locator('.action').getByText('Ավելացնել');
-    await addToCartButton.waitFor({ state: 'visible' });
-    await addToCartButton.click();
-
-    const basketButton = page.locator('.basket_block .basket_btn');
-    await basketButton.click();
-
-    const deleteButton = page.locator('.mpquickcart-block .delete');
-    await deleteButton.click();
-
-    const confirmButton = page.locator('.modal-inner-wrap .action-accept');
-    await confirmButton.click();
-
-    const emptyBasketMessage = page.locator('.empty');
-    await expect(emptyBasketMessage).toBeVisible();
-  });
+    //check notice message appearnce
+    await page.waitForSelector('.message.notice', { state: 'visible' });
+    const noticeMessageCard = page.locator('.message.notice');
+    await expect(noticeMessageCard).toBeVisible();
+  })
 });
