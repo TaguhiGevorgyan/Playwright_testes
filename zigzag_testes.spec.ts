@@ -1,23 +1,22 @@
 import { test, expect } from '@playwright/test';
+import {HomePage} from '../../pom/homePage/homePagePOM';
 
 test.describe('Price Sorting, Search Functionality ', () => {
+  const searchPage = new HomePage(page);
   test.beforeEach(async ({ page }) => {
     await page.goto('https://www.zigzag.am/am/');
   });
   test('Price sorting test', async ({ page }) => {
     //1. Search the item
-    const searchBox = page.locator('#search');
-    await searchBox.fill('iphone 16');
-    await searchBox.press('Enter');
+    await searchPage.search('iphone16')
     //2.Check if search result is visible
-    const header = page.getByText('Search results for "iphone 16"');
+    const header = page.getByText('Search results for "iphone 16"'); //loc ???Assert
     await expect(header).toBeVisible();
     //3.Sort the page 
-    const filterButton = page.locator('.filter-option-inner-inner');
-    await filterButton.click();
+    await searchPage.filter();//հարց(page-ը փոխվել է);
     await page.click('text=Գնի նվազման');
     //4.Take all current prices
-    const priceLocator = page.locator('span.current_price');
+    const priceLocator = page.locator('span.current_price'); //loc //հարց expect-ը ոնց պետք ա գրել
     //5 wait untile the first elemnet will be visible
     await expect(priceLocator.first()).toBeVisible({ timeout: 10000 });
     //6.All elements count
@@ -38,15 +37,13 @@ test.describe('Price Sorting, Search Functionality ', () => {
   })
   test('Search functionality', async ({ page }) => {
   //Search the item
-    const searchBox = page.locator('#search');
-    await searchBox.fill('Samsung');
-    await searchBox.press('Enter');
+  await searchPage.search('Samsung')
   //Check if the correct page is opened
-    const headerText = page.locator('.span.base');
+    const headerText = page.locator('.span.base');//loc // հարց assert
     expect.soft(headerText).toHaveText('Search results for "Samsung"');
   //take all items' names and prices
-    const nameLocator = page.locator('.product_name');
-    const priceLocator = page.locator('span.price');
+    const nameLocator = page.locator('.product_name');//loc
+    const priceLocator = page.locator('span.price');//loc
   //wait untill the first item's name and price will appear
     await expect(nameLocator.first()).toBeVisible({ timeout: 10000 });
     await expect(priceLocator.first()).toBeVisible({ timeout: 1000 });
@@ -64,12 +61,10 @@ test.describe('Price Sorting, Search Functionality ', () => {
   })
   //invalid search
   test('Invalid search', async ({ page }) => {
-    const searchBox = page.locator('#search');
-    await searchBox.fill('test');
-    await searchBox.press('Enter');
+    await searchPage.search('test')
     //check notice message appearnce
     await page.waitForSelector('.message.notice', { state: 'visible' });
-    const noticeMessageCard = page.locator('.message.notice');
+    const noticeMessageCard = page.locator('.message.notice'); //loc 
     await expect(noticeMessageCard).toBeVisible();
   })
 });
